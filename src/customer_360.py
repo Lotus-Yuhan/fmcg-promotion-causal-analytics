@@ -75,12 +75,25 @@ def _build_purchase_interval_features(transactions: pd.DataFrame) -> pd.DataFram
     )
 
 
-def build_customer_360() -> pd.DataFrame:
-    """Create one analytical row per observed household."""
+def build_customer_360(cutoff_day: int | None = None) -> pd.DataFrame:
+    """Create one analytical row per observed household.
+
+    ``cutoff_day`` supports time-window robustness checks. When supplied, only
+    transactions observed on or before that relative day are used.
+    """
     transactions = pd.read_parquet(PROCESSED_DIR / "transactions.parquet")
     products = pd.read_parquet(PROCESSED_DIR / "products.parquet")
     beverage = pd.read_parquet(PROCESSED_DIR / "beverage_transactions.parquet")
     demographics = pd.read_parquet(PROCESSED_DIR / "demographics.parquet")
+
+    full_end_day = int(transactions["day"].max())
+    if cutoff_day is not None:
+        if cutoff_day < int(transactions["day"].min()) or cutoff_day > full_end_day:
+            raise ValueError(
+                f"cutoff_day must be within the observed range; received {cutoff_day}"
+            )
+        transactions = transactions.loc[transactions["day"] <= cutoff_day].copy()
+        beverage = beverage.loc[beverage["day"] <= cutoff_day].copy()
 
     observation_end_day = int(transactions["day"].max())
 

@@ -34,7 +34,7 @@ See [PROJECT_PLAN.md](PROJECT_PLAN.md) for the delivery plan and [THIRD_PARTY_NO
 | DuckDB/SQL data model | Planned | Schema and quality checks to be added |
 | Customer 360 and RFM analysis | Complete | Code, data dictionary, quality checks and aggregate outputs |
 | Cohort retention analysis | Complete | Censoring-aware long table, matrices, charts and checks |
-| K-Means segmentation and stability checks | Planned | Independent extension |
+| K-Means segmentation and stability checks | Complete | Model selection, seed/time-window stability, profiles and checks |
 | Matching, DiD and event study | Planned | Independent extension |
 | Power BI decision dashboard | Planned | Four-page redesign |
 
@@ -71,8 +71,8 @@ Raw data are not committed to this repository. Download the dataset from the off
 - calculate Recency, Frequency and Monetary features — **complete**;
 - measure basket value, active weeks, purchase intervals and category breadth;
 - build customer and revenue cohort-retention matrices;
-- compare rule-based RFM segments with K-Means clusters;
-- test cluster stability across seeds and time windows.
+- compare rule-based RFM segments with K-Means clusters — **complete**;
+- test cluster stability across seeds and time windows — **complete**.
 
 ## Independent Extension 1: Customer 360 and RFM
 
@@ -144,6 +144,48 @@ python -m src.cohort_retention
 
 Method, censoring rules and limitations are documented in
 [`docs/COHORT_RETENTION_METHOD.md`](docs/COHORT_RETENTION_METHOD.md).
+
+## Independent Extension 3: Validated K-Means Segmentation
+
+`src/kmeans_segmentation.py` compares K=2 through K=8 using silhouette,
+Calinski-Harabasz, Davies-Bouldin, inertia and repeated-seed stability. K=2 has
+the strongest raw separation but produces an overly coarse high/low split. K=3
+is selected as the smallest decision-useful solution: its mean silhouette is
+0.1745 and its mean pairwise Adjusted Rand Index across five seeds is 0.9963.
+
+The final solution covers all 2,500 households and produces three interpretable
+groups:
+
+- **High-Value Frequent:** 1,129 households (45.2%) generate 79.0% of revenue.
+- **Developing Occasional:** 967 households (38.7%) generate 19.3% of revenue.
+- **Dormant Low-Value:** 404 households (16.2%) generate 1.8% of revenue.
+
+An 80%-history versus full-history robustness test produces an Adjusted Rand
+Index of 0.6905 across 2,498 common households. This is evidence of moderate,
+not perfect, time-window stability. Discount, coupon and beverage-promotion
+rates are also too similar across clusters to justify calling any cluster
+"price sensitive"; promotion orientation remains a separate behavioural proxy.
+
+![K-Means model selection](outputs/charts/kmeans_model_selection.png)
+
+![K-Means standardised cluster profile](outputs/charts/kmeans_cluster_profile.png)
+
+![K-Means PCA map](outputs/charts/kmeans_pca_map.png)
+
+All nine final-segmentation quality checks and all three stability checks pass.
+The household-level assignment file remains local and Git-ignored; the public
+repository contains the aggregate cluster profile, RFM cross-tab, charts and
+validation evidence.
+
+Reproduce the segmentation with:
+
+```powershell
+python -m src.kmeans_segmentation
+```
+
+Feature preparation, model-selection logic, naming rules and limitations are
+documented in
+[`docs/KMEANS_SEGMENTATION_METHOD.md`](docs/KMEANS_SEGMENTATION_METHOD.md).
 
 ### 3. Promotion Effectiveness
 
