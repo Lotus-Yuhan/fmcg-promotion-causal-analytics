@@ -33,7 +33,7 @@ See [PROJECT_PLAN.md](PROJECT_PLAN.md) for the delivery plan and [THIRD_PARTY_NO
 | Reproduce and validate baseline results | Complete locally | End-to-end pipeline executed; current-schema fix recorded |
 | DuckDB/SQL data model | Planned | Schema and quality checks to be added |
 | Customer 360 and RFM analysis | Complete | Code, data dictionary, quality checks and aggregate outputs |
-| Cohort retention analysis | Planned | Independent extension |
+| Cohort retention analysis | Complete | Censoring-aware long table, matrices, charts and checks |
 | K-Means segmentation and stability checks | Planned | Independent extension |
 | Matching, DiD and event study | Planned | Independent extension |
 | Power BI decision dashboard | Planned | Four-page redesign |
@@ -111,6 +111,39 @@ The household-level Customer 360 CSV is written to the Git-ignored
 `data/local_exports/` directory for local Power BI use. Only aggregate RFM and
 persona summaries are committed. Field definitions and limitations are in
 [`docs/CUSTOMER_360_DATA_DICTIONARY.md`](docs/CUSTOMER_360_DATA_DICTIONARY.md).
+
+## Independent Extension 2: Cohort Retention
+
+`src/cohort_retention.py` groups households by their first observed purchase in
+fixed 30-day periods. It creates a complete observable cohort-age panel, fills
+genuine zero-activity cells with zero, and leaves future unobservable cells
+missing rather than misclassifying them as churn.
+
+Nine automated checks pass, including household-count reconciliation, 100%
+age-zero retention, valid retention bounds, censoring logic and exact revenue
+reconciliation. Only four cohorts contain at least 30 households; seven tiny
+later cohorts remain in the audit table but are excluded from visual comparison.
+
+Across comparable non-P00 cohorts, approximately **81.1%** of households remain
+active at cohort age 12. Customer retention is stable near 80% after the initial
+drop, consistent with the dataset's frequent-shopper sampling frame.
+
+The unadjusted revenue index exceeds 100%, but this is not presented as organic
+growth: age zero is often a partial 30-day period and later values also reflect
+survivor composition.
+
+![Customer retention heatmap](outputs/charts/cohort_customer_retention.png)
+
+![Unadjusted revenue retention heatmap](outputs/charts/cohort_revenue_retention.png)
+
+Reproduce the cohort outputs with:
+
+```powershell
+python -m src.cohort_retention
+```
+
+Method, censoring rules and limitations are documented in
+[`docs/COHORT_RETENTION_METHOD.md`](docs/COHORT_RETENTION_METHOD.md).
 
 ### 3. Promotion Effectiveness
 
