@@ -14,7 +14,10 @@ PROCESSED_DIR = pathlib.Path(__file__).parent.parent / "data" / "processed"
 
 def _strip_strings(df: pd.DataFrame) -> pd.DataFrame:
     """Strip leading/trailing whitespace from all object columns in-place."""
-    for col in df.select_dtypes(include="object").columns:
+    # pandas 3 uses a dedicated string dtype by default.  Include both legacy
+    # object columns and the new string dtype so the cleaning step works across
+    # pandas 2.x and 3.x without raising a compatibility warning.
+    for col in df.select_dtypes(include=["object", "string"]).columns:
         df[col] = df[col].str.strip()
     return df
 

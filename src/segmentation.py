@@ -188,8 +188,15 @@ if __name__ == "__main__":
     dim_hh = segmented.merge(demo, on="household_key", how="left")
     dim_hh_path = POWERBI_DIR / "dim_households.csv"
     dim_hh.to_csv(dim_hh_path, index=False)
+    # The current official Complete Journey release anonymises several
+    # demographic labels as classification_1, classification_2, etc., whereas
+    # older releases exposed fields such as age_desc.  Measure coverage from
+    # the source household keys instead of relying on one release-specific
+    # demographic column.
+    demo_households = set(demo["household_key"].dropna())
+    demographic_coverage = dim_hh["household_key"].isin(demo_households).sum()
     print(f"wrote {dim_hh_path} ({len(dim_hh):,} rows, "
-          f"{dim_hh[['age_desc']].notna().sum().iloc[0]:,} with demographics)")
+          f"{demographic_coverage:,} with demographics)")
 
     # household_segments summary CSV
     seg_csv_cols = [
