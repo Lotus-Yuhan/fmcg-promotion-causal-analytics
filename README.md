@@ -35,7 +35,7 @@ See [PROJECT_PLAN.md](PROJECT_PLAN.md) for the delivery plan and [THIRD_PARTY_NO
 | Customer 360 and RFM analysis | Complete | Code, data dictionary, quality checks and aggregate outputs |
 | Cohort retention analysis | Complete | Censoring-aware long table, matrices, charts and checks |
 | K-Means segmentation and stability checks | Complete | Model selection, seed/time-window stability, profiles and checks |
-| Matching, DiD and event study | Planned | Independent extension |
+| Matching, DiD and event study | Complete | 423 matched events, balance, pre-trend and placebo evidence |
 | Power BI decision dashboard | Planned | Four-page redesign |
 
 ## Business Question
@@ -191,15 +191,53 @@ documented in
 
 The imported baseline compares promoted and non-promoted unit velocity. That measure is descriptive and may be affected by seasonality, product selection, store differences and pre-existing trends.
 
-The planned extension will:
+The independent extension now:
 
-- construct a complete `product_id × store_id × week_no` panel;
-- define promotion episodes using display, mailer and discount signals;
-- match treated observations to comparable non-promoted controls;
-- report covariate balance and common support;
-- estimate Difference-in-Differences models;
-- visualise event-time coefficients and test pre-trends;
-- run alternative-window, placebo and outlier sensitivity checks.
+- constructs a product-store-week event panel;
+- defines isolated display/mailer episodes with four-week pre/post windows;
+- matches treated events to same-category unexposed controls;
+- reports covariate balance and applies a common-support caliper;
+- estimates matched Difference-in-Differences effects;
+- visualises event-time coefficients and tests pre-trends;
+- runs placebo, strict-match and outlier sensitivity checks.
+
+## Independent Extension 4: Matched Promotion Evaluation
+
+`src/causal_promotion_evaluation.py` evaluates isolated one-week display or
+mailer exposures. It restricts the analysis to 326 sufficiently observed
+beverage SKUs, constructs clean nine-week event windows and matches treated
+product-store events to unexposed same-category controls using the complete
+four-week pre-period path, revenue, trend, activity and realised price.
+
+The final sample contains **423 events across 139 treated SKUs**. Matching
+reduces the maximum absolute standardised mean difference from 0.421 to 0.099.
+The product-level pre-trend slope test (p=0.442) and pre-period placebo
+(p=0.335) do not indicate a systematic pre-treatment divergence.
+
+The matched DiD estimate is approximately **+0.36 units** per product-store
+event (95% cluster-bootstrap CI: +0.14 to +0.65) and **+$0.55 revenue**
+(95% CI: +$0.19 to +$0.98) in the exposure week. The relative estimate is about
+45%, but this reflects a low product-store weekly baseline; the modest absolute
+increment is more useful for budget decisions. The estimate remains positive
+after outlier winsorisation (+0.25 units) and under a stricter matching-distance
+rule (+0.23 units; 95% CI: +0.07 to +0.39). Post-event intervals cross zero, so
+there is no reliable evidence of a persistent effect.
+
+![Promotion matching balance](outputs/charts/promotion_matching_balance.png)
+
+![Matched promotion event study](outputs/charts/promotion_event_study_units.png)
+
+![Promotion category effects](outputs/charts/promotion_category_effects.png)
+
+Reproduce the extension with:
+
+```powershell
+python -m src.causal_promotion_evaluation
+```
+
+Treatment construction, matching, estimation, diagnostics and limitations are
+documented in
+[`docs/PROMOTION_CAUSAL_METHOD.md`](docs/PROMOTION_CAUSAL_METHOD.md).
 
 ### 4. Commercial Decision Layer
 

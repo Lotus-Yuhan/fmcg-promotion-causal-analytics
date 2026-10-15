@@ -115,7 +115,13 @@ def load_causal(product_ids: set | None = None) -> pd.DataFrame:
     for chunk in pd.read_csv(
         RAW_DIR / "causal_data.csv",
         chunksize=1_000_000,
-        dtype={"PRODUCT_ID": "Int64", "STORE_ID": "Int64", "WEEK_NO": "Int64"},
+        dtype={
+            "PRODUCT_ID": "Int64",
+            "STORE_ID": "Int64",
+            "WEEK_NO": "Int64",
+            "display": "string",
+            "mailer": "string",
+        },
     ):
         chunk.columns = [c.lower() for c in chunk.columns]
         if product_ids is not None:
