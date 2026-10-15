@@ -29,10 +29,11 @@ See [PROJECT_PLAN.md](PROJECT_PLAN.md) for the delivery plan and [THIRD_PARTY_NO
 |---|---|---|
 | Import source baseline and preserve history | Complete | `upstream/main` retained |
 | Attribution and project scope | Complete | Project plan and third-party notice |
-| Obtain raw dunnhumby data | Pending | Raw files are intentionally not distributed |
-| Reproduce and validate baseline results | Pending | No independent reproduction claim yet |
+| Obtain raw dunnhumby data | Complete locally | Raw files are intentionally not distributed |
+| Reproduce and validate baseline results | Complete locally | End-to-end pipeline executed; current-schema fix recorded |
 | DuckDB/SQL data model | Planned | Schema and quality checks to be added |
-| Customer 360, RFM and cohort analysis | Planned | Independent extension |
+| Customer 360 and RFM analysis | Complete | Code, data dictionary, quality checks and aggregate outputs |
+| Cohort retention analysis | Planned | Independent extension |
 | K-Means segmentation and stability checks | Planned | Independent extension |
 | Matching, DiD and event study | Planned | Independent extension |
 | Power BI decision dashboard | Planned | Four-page redesign |
@@ -67,11 +68,49 @@ Raw data are not committed to this repository. Download the dataset from the off
 
 ### 2. Customer 360 and Segmentation
 
-- calculate Recency, Frequency and Monetary features;
+- calculate Recency, Frequency and Monetary features — **complete**;
 - measure basket value, active weeks, purchase intervals and category breadth;
 - build customer and revenue cohort-retention matrices;
 - compare rule-based RFM segments with K-Means clusters;
 - test cluster stability across seeds and time windows.
+
+## Independent Extension 1: Customer 360 and RFM
+
+`src/customer_360.py` builds one row per household from the independently
+reproduced transaction pipeline. It combines full-store RFM measures, shopping
+cadence, category breadth, discount and coupon behaviour, beverage engagement
+and the partial anonymised demographics in the current official data release.
+
+The implementation includes eight automated checks covering household grain,
+key completeness, recency and frequency validity, RFM completeness and exact
+reconciliation to source transaction revenue. All checks pass on the local
+2,500-household dataset; see
+[`outputs/validation/customer_360_quality.csv`](outputs/validation/customer_360_quality.csv).
+
+Selected descriptive findings:
+
+- **Champions:** 506 households (20.2%) contribute 45.2% of observed revenue.
+- **High-Value Loyal:** 677 households (27.1%) contribute 58.6% of revenue.
+- **High-Value At Risk:** 183 households (7.3%) contribute 10.6% of revenue.
+- **Low-Frequency Customers:** 974 households (39.0%) contribute 11.6% of revenue.
+- **Promotion-Oriented Customers:** 59 households meet a deliberately strict
+  behavioural proxy based on top-quartile discount-basket rate and at-least-
+  median shopping frequency.
+
+These labels describe observed behaviour within this retailer and time window.
+In particular, promotion-oriented behaviour is not proof of underlying price
+sensitivity or a causal promotion response.
+
+Reproduce the extension after running the imported baseline:
+
+```powershell
+python -m src.customer_360
+```
+
+The household-level Customer 360 CSV is written to the Git-ignored
+`data/local_exports/` directory for local Power BI use. Only aggregate RFM and
+persona summaries are committed. Field definitions and limitations are in
+[`docs/CUSTOMER_360_DATA_DICTIONARY.md`](docs/CUSTOMER_360_DATA_DICTIONARY.md).
 
 ### 3. Promotion Effectiveness
 
@@ -121,11 +160,13 @@ fmcg-promotion-causal-analytics/
 ├── data/
 │   ├── raw/                        # Local only; not committed
 │   ├── processed/                  # Regenerable intermediates
-│   └── powerbi_exports/            # Reviewable baseline aggregates
-├── notebooks/                      # Baseline notebooks; extensions planned
-├── outputs/                        # Charts and presentation assets
+│   ├── local_exports/              # Local household-level Power BI inputs
+│   └── powerbi_exports/            # Reviewable aggregate outputs
+├── docs/                           # Data dictionaries and method notes
+├── notebooks/                      # Baseline narrative notebooks
+├── outputs/                        # Charts, validation and presentation assets
 ├── scripts/                        # Supporting scripts
-├── src/                            # Baseline Python modules
+├── src/                            # Baseline and independent Python modules
 ├── PROJECT_PLAN.md                 # Portfolio delivery plan
 ├── THIRD_PARTY_NOTICES.md          # Attribution and data notice
 ├── requirements.txt
@@ -136,7 +177,8 @@ Planned additions include `sql/`, `tests/`, `reports/` and `powerbi/` directorie
 
 ## Running the Imported Baseline
 
-The commands below describe the imported baseline and have not yet been recorded as a successful independent end-to-end reproduction in this repository.
+The imported baseline was reproduced locally against the current official data
+release. Raw and regenerable household-level data remain local.
 
 ```powershell
 pip install -r requirements.txt

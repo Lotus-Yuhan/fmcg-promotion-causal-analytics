@@ -6,6 +6,9 @@ archive.zip
 # ---- Large / regenerable intermediates ----
 # Parquet intermediates are rebuilt by the notebooks/src pipeline.
 data/processed/
+# Household-level analytical exports are local inputs for Power BI and are not
+# redistributed. Only aggregate summaries are committed.
+data/local_exports/
 # 17MB transaction-level fact table (regenerable; too heavy for the repo).
 data/powerbi_exports/fact_transactions_beverage.csv
 
