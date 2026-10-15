@@ -36,6 +36,7 @@ See [PROJECT_PLAN.md](PROJECT_PLAN.md) for the delivery plan and [THIRD_PARTY_NO
 | Cohort retention analysis | Complete | Censoring-aware long table, matrices, charts and checks |
 | K-Means segmentation and stability checks | Complete | Model selection, seed/time-window stability, profiles and checks |
 | Matching, DiD and event study | Complete | 423 matched events, balance, pre-trend and placebo evidence |
+| Commercial decision and ROI scenario layer | Complete | Coupon, category, SKU, KPI and assumption tables |
 | Power BI decision dashboard | Planned | Four-page redesign |
 
 ## Business Question
@@ -241,10 +242,51 @@ documented in
 
 ### 4. Commercial Decision Layer
 
-- translate model estimates into incremental units and revenue ranges;
-- compare category, SKU, store and customer-segment heterogeneity;
-- distinguish observed facts, estimated effects and business assumptions;
-- model budget scenarios under explicit gross-margin and execution-cost assumptions.
+- translate model estimates into incremental units and revenue ranges — **complete**;
+- compare category, SKU and customer-segment evidence — **complete**;
+- distinguish observed facts, estimated effects and business assumptions — **complete**;
+- model budget scenarios under explicit gross-margin, execution-cost and scaling assumptions — **complete**.
+
+## Independent Extension 5: Commercial Decision Layer
+
+`src/commercial_decision_layer.py` produces Power BI-ready decision tables and
+labels every metric as observed behaviour, a quasi-experimental estimate or an
+assumption-only scenario.
+
+The coupon analysis corrects an important denominator problem: the 124,548
+coupon-table rows are product eligibility mappings, not issued coupons. Using
+7,208 targeted household-campaign exposures, the valid observed redemption
+penetration is **12.33%**. Targeting is heavily concentrated among High-Value
+Frequent customers, whose exposure-level redemption penetration is 13.78%,
+versus 4.13% for Developing Occasional customers. This remains descriptive,
+because targeting itself is not random.
+
+Carbonated soft drinks contribute 59.2% of beverage sales and show +0.39
+matched incremental units per event; juice contributes 22.8% and shows +0.27.
+Both warrant controlled expansion tests. Five smaller categories are labelled
+as needing more causal evidence rather than being ranked using descriptive lift
+alone.
+
+The ROI table contains 243 explicitly hypothetical combinations of causal
+effect case, margin, execution cost, panel-to-total scaling and budget. With the
+base revenue estimate, 30% margin and $5 cost per event, the required
+panel-to-total multiplier is approximately 30.5 just to break even. This is an
+assumption threshold, not an observed ROI.
+
+![Coupon campaign penetration](outputs/charts/coupon_campaign_penetration.png)
+
+![Category decision map](outputs/charts/category_decision_map.png)
+
+![ROI break-even sensitivity](outputs/charts/roi_break_even_sensitivity.png)
+
+Reproduce the decision layer with:
+
+```powershell
+python -m src.commercial_decision_layer
+```
+
+Definitions, business interpretation and scenario boundaries are documented in
+[`docs/BUSINESS_DECISION_LAYER.md`](docs/BUSINESS_DECISION_LAYER.md).
 
 ## Causal and Commercial Boundaries
 
